@@ -245,8 +245,11 @@ const App = () => {
         ...item,
         done: userProgress.includes(item.id)
       })));
+      // シフトデータも読み込み
+      const userShifts = allShifts[currentUser.id] || {};
+      setShifts(userShifts);
     }
-  }, [currentUser, view, traineeProgress]);
+  }, [currentUser, view, traineeProgress, allShifts]);
 
   // ステータス自動更新（期限切れチェック）
   React.useEffect(() => {
@@ -453,6 +456,17 @@ const App = () => {
     setAllShifts(newAllShifts);
   };
 
+  // 新人自身のシフト更新（Firebase保存付き）
+  const handleUpdateShifts = async (newShifts) => {
+    setShifts(newShifts);
+    
+    // currentUserがいる場合、Firebaseに保存してallShiftsも更新
+    if (currentUser && !currentUser.isAdmin) {
+      await FirebaseDB.saveShifts(currentUser.id, newShifts);
+      setAllShifts({ ...allShifts, [currentUser.id]: newShifts });
+    }
+  };
+
   // カリキュラム進捗更新（Firebase保存付き）
   const handleUpdateCurriculum = async (newCurriculum) => {
     setCurriculum(newCurriculum);
@@ -531,7 +545,7 @@ const App = () => {
   }
 
   if (view === 'trainee' && currentUser) {
-    return <TraineeView currentUser={currentUser} currentTime={currentTime} setView={setView} setCurrentUser={setCurrentUser} curriculum={curriculum} setCurriculum={handleUpdateCurriculum} shifts={shifts} setShifts={setShifts} />;
+    return <TraineeView currentUser={currentUser} currentTime={currentTime} setView={setView} setCurrentUser={setCurrentUser} curriculum={curriculum} setCurriculum={handleUpdateCurriculum} shifts={shifts} setShifts={handleUpdateShifts} />;
   }
 
   return <div>Loading...</div>;
