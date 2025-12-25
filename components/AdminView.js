@@ -9,7 +9,8 @@ const AdminView = ({
   showResetModal, setShowResetModal, handleReset,
   showAddAdminModal, setShowAddAdminModal,
   handlePromoteToOwner, handleDeleteAdmin,
-  handleAddTraineeFromModal, handleAddAdminFromModal
+  handleAddTraineeFromModal, handleAddAdminFromModal,
+  handlePermanentDelete
 }) => {
   const [adminTab, setAdminTab] = React.useState('training');
   const [selectedTraineeForShift, setSelectedTraineeForShift] = React.useState(null);
@@ -65,6 +66,7 @@ const AdminView = ({
         currentTime={currentTime}
         onBack={() => setSelectedMember(null)}
         onPromoteToOwner={handlePromoteToOwner}
+        onPermanentDelete={handlePermanentDelete}
         isOwner={isOwner}
       />
     );
@@ -234,7 +236,7 @@ const AdminView = ({
 };
 
 // 個人プロフィールページ
-const MemberProfilePage = ({ member, currentUser, trainees, admins, traineeProgress, allShifts, currentTime, onBack, onPromoteToOwner, isOwner }) => {
+const MemberProfilePage = ({ member, currentUser, trainees, admins, traineeProgress, allShifts, currentTime, onBack, onPromoteToOwner, onPermanentDelete, isOwner }) => {
   const [profileMonth, setProfileMonth] = React.useState(new Date());
   
   // メンバーの種類を判定
@@ -385,6 +387,28 @@ const MemberProfilePage = ({ member, currentUser, trainees, admins, traineeProgr
             {isTrainee && (
               <p style={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px' }}>新人にはオーナー権限を委譲できません。<br/>先に管理者に昇格させてください。</p>
             )}
+          </div>
+        )}
+
+        {/* オーナー専用：完全削除（フェードアウトとは別） */}
+        {isOwner && member.id !== currentUser.id && (
+          <div style={{ background: '#fef2f2', borderRadius: '16px', padding: '20px', marginBottom: '16px', border: '1px solid #fecaca' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#dc2626', marginBottom: '12px' }}>🗑️ 完全削除</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
+              フェードアウトリストに残さず、このメンバーのデータを完全に削除します。<br/>
+              テスト用アカウントの削除などに使用してください。
+            </p>
+            <button 
+              onClick={() => { 
+                if (confirm(`⚠️ 完全削除の確認\n\n${member.name}さんのデータを完全に削除しますか？\n\n• フェードアウトリストには残りません\n• シフト・進捗データも削除されます\n• この操作は取り消せません`)) {
+                  onPermanentDelete(member, isTrainee ? 'trainee' : 'admin');
+                  onBack();
+                }
+              }} 
+              style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', background: '#dc2626', color: 'white', fontWeight: '700', fontSize: '16px', cursor: 'pointer' }}
+            >
+              🗑️ 完全に削除する
+            </button>
           </div>
         )}
       </div>

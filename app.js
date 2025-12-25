@@ -430,6 +430,42 @@ const App = () => {
     }
   };
 
+  // 完全削除（フェードアウトリストに残さない）
+  const handlePermanentDelete = async (member, memberType) => {
+    try {
+      if (memberType === 'trainee') {
+        // 新人を削除
+        await FirebaseDB.deleteTrainee(member.id);
+        setTrainees(trainees.filter(t => t.id !== member.id));
+        
+        // シフトデータも削除
+        if (allShifts[member.id]) {
+          await db.collection('shifts').doc(member.id).delete();
+          const newAllShifts = { ...allShifts };
+          delete newAllShifts[member.id];
+          setAllShifts(newAllShifts);
+        }
+        
+        // 進捗データも削除
+        if (traineeProgress[member.id]) {
+          await db.collection('progress').doc(member.id).delete();
+          const newProgress = { ...traineeProgress };
+          delete newProgress[member.id];
+          setTraineeProgress(newProgress);
+        }
+      } else {
+        // 管理者を削除
+        await FirebaseDB.deleteAdmin(member.id);
+        setAdmins(admins.filter(a => a.id !== member.id));
+      }
+      
+      alert(`${member.name}さんを完全に削除しました`);
+    } catch (error) {
+      console.error('完全削除エラー:', error);
+      alert('削除中にエラーが発生しました');
+    }
+  };
+
   // 新人のステータス更新（デビューなど）
   const handleUpdateTrainees = async (newTrainees) => {
     // 変更があった新人を検出して更新
@@ -535,6 +571,7 @@ const App = () => {
           handleDeleteAdmin={handleDeleteAdmin}
           handleAddTraineeFromModal={handleAddTraineeFromModal}
           handleAddAdminFromModal={handleAddAdminFromModal}
+          handlePermanentDelete={handlePermanentDelete}
         />
         {showAddTraineeModal && <AddTraineeModal newTraineeName={newTraineeName} setNewTraineeName={setNewTraineeName} newTraineeEmail={newTraineeEmail} setNewTraineeEmail={setNewTraineeEmail} handleAddTrainee={handleAddTrainee} setShowAddTraineeModal={setShowAddTraineeModal} />}
         {showDeleteModal && deleteTarget && <DeleteModal deleteTarget={deleteTarget} setShowDeleteModal={setShowDeleteModal} setDeleteTarget={setDeleteTarget} handleDeleteTrainee={handleDeleteTrainee} />}
