@@ -133,3 +133,125 @@ const AddAdminModal = ({ newAdminName, setNewAdminName, newAdminEmail, setNewAdm
     </div>
   </div>
 );
+
+// 統合メンバー追加モーダル（役職選択付き）
+const AddMemberModal = ({ isOwner, onAddTrainee, onAddAdmin, onClose }) => {
+  const [memberType, setMemberType] = React.useState('trainee');
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+
+  const handleAdd = () => {
+    if (memberType === 'trainee') {
+      onAddTrainee({ name, email });
+    } else {
+      onAddAdmin({ name, email, password });
+    }
+    setName('');
+    setEmail('');
+    setPassword('');
+    onClose();
+  };
+
+  const isValid = name.trim() && email.trim() && (memberType === 'trainee' || password.trim());
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
+      <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#1e293b' }}>➕ メンバーを追加</h3>
+        
+        {/* 役職選択（オーナーのみ管理者を選択可能） */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>追加する役職</label>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => setMemberType('trainee')} 
+              style={{ 
+                flex: 1, padding: '12px', borderRadius: '10px', 
+                border: memberType === 'trainee' ? '2px solid #2563eb' : '1px solid #e2e8f0', 
+                background: memberType === 'trainee' ? '#dbeafe' : 'white', 
+                color: memberType === 'trainee' ? '#2563eb' : '#64748b', 
+                fontWeight: '600', cursor: 'pointer' 
+              }}
+            >
+              🎓 新人
+            </button>
+            {isOwner && (
+              <button 
+                onClick={() => setMemberType('admin')} 
+                style={{ 
+                  flex: 1, padding: '12px', borderRadius: '10px', 
+                  border: memberType === 'admin' ? '2px solid #7c3aed' : '1px solid #e2e8f0', 
+                  background: memberType === 'admin' ? '#f3e8ff' : 'white', 
+                  color: memberType === 'admin' ? '#7c3aed' : '#64748b', 
+                  fontWeight: '600', cursor: 'pointer' 
+                }}
+              >
+                👤 管理者
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 名前 */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>名前</label>
+          <input 
+            type="text" 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
+            placeholder="例：山田 太郎" 
+            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px', boxSizing: 'border-box' }} 
+          />
+        </div>
+
+        {/* メールアドレス */}
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>メールアドレス</label>
+          <input 
+            type="email" 
+            value={email} 
+            onChange={e => setEmail(e.target.value)} 
+            placeholder="例：yamada@example.com" 
+            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px', boxSizing: 'border-box' }} 
+          />
+        </div>
+
+        {/* パスワード（管理者のみ） */}
+        {memberType === 'admin' && (
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '8px' }}>パスワード</label>
+            <input 
+              type="text" 
+              value={password} 
+              onChange={e => setPassword(e.target.value)} 
+              placeholder="パスワードを設定" 
+              style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px', boxSizing: 'border-box' }} 
+            />
+          </div>
+        )}
+
+        <button 
+          onClick={handleAdd} 
+          disabled={!isValid} 
+          style={{ 
+            width: '100%', padding: '16px', borderRadius: '12px', border: 'none', 
+            background: isValid ? (memberType === 'admin' ? 'linear-gradient(135deg, #7c3aed, #9333ea)' : 'linear-gradient(135deg, #2563eb, #3b82f6)') : '#e2e8f0', 
+            color: isValid ? 'white' : '#94a3b8', 
+            fontWeight: '700', fontSize: '16px', 
+            cursor: isValid ? 'pointer' : 'not-allowed', 
+            marginBottom: '8px' 
+          }}
+        >
+          {memberType === 'admin' ? '👤 管理者を追加' : '🎓 新人を追加'}
+        </button>
+        <button 
+          onClick={() => { setName(''); setEmail(''); setPassword(''); onClose(); }} 
+          style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer' }}
+        >
+          キャンセル
+        </button>
+      </div>
+    </div>
+  );
+};

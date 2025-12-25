@@ -371,6 +371,42 @@ const App = () => {
     }
   };
 
+  // 統合モーダルからの新人追加
+  const handleAddTraineeFromModal = async ({ name, email }) => {
+    if (!name.trim() || !email.trim()) return;
+    try {
+      const newTrainee = {
+        name: name,
+        email: email,
+        firstLoginAt: new Date(),
+        status: 'training',
+        workStatus: 'idle'
+      };
+      const added = await FirebaseDB.addTrainee(newTrainee);
+      setTrainees([...trainees, added]);
+    } catch (error) {
+      console.error('新人追加エラー:', error);
+    }
+  };
+
+  // 統合モーダルからの管理者追加
+  const handleAddAdminFromModal = async ({ name, email, password }) => {
+    if (!name.trim() || !email.trim() || !password.trim()) return;
+    try {
+      const newAdmin = {
+        name: name,
+        email: email,
+        password: password,
+        isAdmin: true,
+        role: 'admin'
+      };
+      const added = await FirebaseDB.addAdmin(newAdmin);
+      setAdmins([...admins, added]);
+    } catch (error) {
+      console.error('管理者追加エラー:', error);
+    }
+  };
+
   // 管理者をオーナーに昇格
   const handlePromoteToOwner = async (adminId) => {
     try {
@@ -483,6 +519,8 @@ const App = () => {
           setShowAddAdminModal={setShowAddAdminModal}
           handlePromoteToOwner={handlePromoteToOwner}
           handleDeleteAdmin={handleDeleteAdmin}
+          handleAddTraineeFromModal={handleAddTraineeFromModal}
+          handleAddAdminFromModal={handleAddAdminFromModal}
         />
         {showAddTraineeModal && <AddTraineeModal newTraineeName={newTraineeName} setNewTraineeName={setNewTraineeName} newTraineeEmail={newTraineeEmail} setNewTraineeEmail={setNewTraineeEmail} handleAddTrainee={handleAddTrainee} setShowAddTraineeModal={setShowAddTraineeModal} />}
         {showDeleteModal && deleteTarget && <DeleteModal deleteTarget={deleteTarget} setShowDeleteModal={setShowDeleteModal} setDeleteTarget={setDeleteTarget} handleDeleteTrainee={handleDeleteTrainee} />}

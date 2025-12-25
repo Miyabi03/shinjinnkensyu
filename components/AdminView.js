@@ -8,7 +8,8 @@ const AdminView = ({
   showDeleteModal, setShowDeleteModal, deleteTarget, setDeleteTarget,
   showResetModal, setShowResetModal, handleReset,
   showAddAdminModal, setShowAddAdminModal,
-  handlePromoteToOwner, handleDeleteAdmin
+  handlePromoteToOwner, handleDeleteAdmin,
+  handleAddTraineeFromModal, handleAddAdminFromModal
 }) => {
   const [adminTab, setAdminTab] = React.useState('training');
   const [selectedTraineeForShift, setSelectedTraineeForShift] = React.useState(null);
@@ -19,6 +20,7 @@ const AdminView = ({
   const [adminShiftStart, setAdminShiftStart] = React.useState('09:00');
   const [adminShiftEnd, setAdminShiftEnd] = React.useState('18:00');
   const [selectedMember, setSelectedMember] = React.useState(null); // 個人ページ用
+  const [showAddMemberModal, setShowAddMemberModal] = React.useState(false); // 統合追加モーダル
 
   // 権限チェック
   const isOwner = currentUser?.role === 'owner';
@@ -150,6 +152,7 @@ const AdminView = ({
             traineeProgress={traineeProgress}
             onSelectMember={setSelectedMember}
             isOwner={isOwner}
+            onShowAddModal={() => setShowAddMemberModal(true)}
           />
         )}
 
@@ -214,6 +217,16 @@ const AdminView = ({
           handleAdminShiftDelete={handleAdminShiftDelete}
           allShifts={allShifts}
           setShowAdminShiftModal={setShowAdminShiftModal}
+        />
+      )}
+
+      {/* 統合メンバー追加モーダル */}
+      {showAddMemberModal && (
+        <AddMemberModal
+          isOwner={isOwner}
+          onAddTrainee={handleAddTraineeFromModal}
+          onAddAdmin={handleAddAdminFromModal}
+          onClose={() => setShowAddMemberModal(false)}
         />
       )}
     </div>

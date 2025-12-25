@@ -184,7 +184,7 @@ const AdminProgressTab = ({ trainees, traineeProgress, currentTime, onSelectMemb
 );
 
 // メンバー一覧タブ（オーナーは全員、管理者は新人のみ）
-const AdminMembersTab = ({ trainees, admins, currentUser, traineeProgress, onSelectMember, isOwner }) => {
+const AdminMembersTab = ({ trainees, admins, currentUser, traineeProgress, onSelectMember, isOwner, onShowAddModal }) => {
   const getRoleLabel = (role) => {
     if (role === 'owner') return '👑 オーナー';
     if (role === 'admin') return '👤 管理者';
@@ -199,7 +199,10 @@ const AdminMembersTab = ({ trainees, admins, currentUser, traineeProgress, onSel
 
   return (
     <>
-      <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>👥 メンバー一覧</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b' }}>👥 メンバー一覧</h2>
+        <button onClick={onShowAddModal} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #7c3aed, #9333ea)', color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>➕ 追加</button>
+      </div>
       
       {/* オーナーのみ: 管理者一覧 */}
       {isOwner && (
