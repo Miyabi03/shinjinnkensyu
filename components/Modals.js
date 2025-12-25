@@ -1,25 +1,39 @@
 // シフトモーダル（新人用）
-const ShiftModal = ({ selectedDate, shiftType, setShiftType, shiftStart, setShiftStart, shiftEnd, setShiftEnd, shifts, setShifts, setShowShiftModal }) => (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
-    <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px' }}>
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>📅 シフト入力</h3>
-      <p style={{ color: '#2563eb', fontWeight: '600', marginBottom: '20px' }}>{selectedDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-        <button onClick={() => setShiftType('work')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: shiftType === 'work' ? '2px solid #2563eb' : '1px solid #e2e8f0', background: shiftType === 'work' ? '#dbeafe' : 'white', color: shiftType === 'work' ? '#2563eb' : '#64748b', fontWeight: '600', cursor: 'pointer' }}>🟢 出勤</button>
-        <button onClick={() => setShiftType('off')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: shiftType === 'off' ? '2px solid #dc2626' : '1px solid #e2e8f0', background: shiftType === 'off' ? '#fee2e2' : 'white', color: shiftType === 'off' ? '#dc2626' : '#64748b', fontWeight: '600', cursor: 'pointer' }}>⛔ OFF</button>
-      </div>
-      {shiftType === 'work' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-          <select value={shiftStart} onChange={e => setShiftStart(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px' }}>{timeOptions.map(t => <option key={t} value={t}>{t}</option>)}</select>
-          <span>〜</span>
-          <select value={shiftEnd} onChange={e => setShiftEnd(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px' }}>{timeOptions.map(t => <option key={t} value={t}>{t}</option>)}</select>
+const ShiftModal = ({ selectedDate, shiftType, setShiftType, shiftStart, setShiftStart, shiftEnd, setShiftEnd, shifts, onSaveShift, setShowShiftModal }) => {
+  const handleSave = () => {
+    const key = formatDateKey(selectedDate);
+    const newShifts = { ...shifts };
+    if (shiftType === 'off') {
+      newShifts[key] = { type: 'off' };
+    } else {
+      newShifts[key] = { type: 'work', start: shiftStart, end: shiftEnd };
+    }
+    onSaveShift(newShifts);
+    setShowShiftModal(false);
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200 }}>
+      <div style={{ background: 'white', borderRadius: '20px 20px 0 0', padding: '24px', width: '100%', maxWidth: '500px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>📅 シフト入力</h3>
+        <p style={{ color: '#2563eb', fontWeight: '600', marginBottom: '20px' }}>{selectedDate.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'long' })}</p>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <button onClick={() => setShiftType('work')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: shiftType === 'work' ? '2px solid #2563eb' : '1px solid #e2e8f0', background: shiftType === 'work' ? '#dbeafe' : 'white', color: shiftType === 'work' ? '#2563eb' : '#64748b', fontWeight: '600', cursor: 'pointer' }}>🟢 出勤</button>
+          <button onClick={() => setShiftType('off')} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: shiftType === 'off' ? '2px solid #dc2626' : '1px solid #e2e8f0', background: shiftType === 'off' ? '#fee2e2' : 'white', color: shiftType === 'off' ? '#dc2626' : '#64748b', fontWeight: '600', cursor: 'pointer' }}>⛔ OFF</button>
         </div>
-      )}
-      <button onClick={() => { const key = formatDateKey(selectedDate); if (shiftType === 'off') { setShifts({ ...shifts, [key]: { type: 'off' } }); } else { setShifts({ ...shifts, [key]: { type: 'work', start: shiftStart, end: shiftEnd } }); } setShowShiftModal(false); }} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: '#2563eb', color: 'white', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' }}>保存</button>
-      <button onClick={() => setShowShiftModal(false)} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer' }}>キャンセル</button>
+        {shiftType === 'work' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <select value={shiftStart} onChange={e => setShiftStart(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px' }}>{timeOptions.map(t => <option key={t} value={t}>{t}</option>)}</select>
+            <span>〜</span>
+            <select value={shiftEnd} onChange={e => setShiftEnd(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '16px' }}>{timeOptions.map(t => <option key={t} value={t}>{t}</option>)}</select>
+          </div>
+        )}
+        <button onClick={handleSave} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: '#2563eb', color: 'white', fontWeight: '600', cursor: 'pointer', marginBottom: '8px' }}>保存</button>
+        <button onClick={() => setShowShiftModal(false)} style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer' }}>キャンセル</button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 管理者用シフトモーダル
 const AdminShiftModal = ({ selectedTraineeForShift, adminSelectedDate, adminShiftType, setAdminShiftType, adminShiftStart, setAdminShiftStart, adminShiftEnd, setAdminShiftEnd, handleAdminShiftSave, handleAdminShiftDelete, allShifts, setShowAdminShiftModal }) => (

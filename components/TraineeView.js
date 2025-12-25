@@ -85,7 +85,7 @@ const TraineeView = ({ currentUser, currentTime, setView, setCurrentUser, curric
           shiftEnd={shiftEnd}
           setShiftEnd={setShiftEnd}
           shifts={shifts}
-          setShifts={setShifts}
+          onSaveShift={setShifts}
           setShowShiftModal={setShowShiftModal}
         />
       )}
