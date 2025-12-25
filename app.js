@@ -109,28 +109,11 @@ const FirebaseDB = {
 // メインアプリケーション
 const App = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
-  const [view, setView] = React.useState(() => {
-    // localStorageからログイン状態を復元
-    try {
-      const savedView = localStorage.getItem('currentView');
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedView && savedUser) {
-        return savedView;
-      }
-    } catch (e) {}
-    return 'login';
-  });
-  const [currentUser, setCurrentUser] = React.useState(() => {
-    try {
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        return JSON.parse(savedUser);
-      }
-    } catch (e) {}
-    return null;
-  });
+  const [view, setView] = React.useState('login');
+  const [currentUser, setCurrentUser] = React.useState(null);
   const [isFirstSetup, setIsFirstSetup] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [lastActivity, setLastActivity] = React.useState(Date.now());
 
   // データ
   const [trainees, setTrainees] = React.useState([]);
@@ -141,18 +124,39 @@ const App = () => {
   const [traineeProgress, setTraineeProgress] = React.useState({});
   const [fadeOutList, setFadeOutList] = React.useState([]);
 
-  // ログイン状態をlocalStorageに保存
+  // 5分間（300000ms）操作がなければ自動ログアウト
+  const TIMEOUT_DURATION = 5 * 60 * 1000;
+
+  // ユーザー操作を検知してlastActivityを更新
   React.useEffect(() => {
-    try {
-      if (currentUser && view !== 'login') {
-        localStorage.setItem('currentView', view);
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      } else if (view === 'login') {
-        localStorage.removeItem('currentView');
-        localStorage.removeItem('currentUser');
+    const updateActivity = () => setLastActivity(Date.now());
+    
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('keypress', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+    window.addEventListener('touchstart', updateActivity);
+    
+    return () => {
+      window.removeEventListener('click', updateActivity);
+      window.removeEventListener('keypress', updateActivity);
+      window.removeEventListener('scroll', updateActivity);
+      window.removeEventListener('touchstart', updateActivity);
+    };
+  }, []);
+
+  // 定期的にタイムアウトをチェック
+  React.useEffect(() => {
+    const checkTimeout = setInterval(() => {
+      if (currentUser && Date.now() - lastActivity > TIMEOUT_DURATION) {
+        // 自動ログアウト
+        setCurrentUser(null);
+        setView('login');
+        alert('5分間操作がなかったため、自動的にログアウトしました。');
       }
-    } catch (e) {}
-  }, [currentUser, view]);
+    }, 10000); // 10秒ごとにチェック
+    
+    return () => clearInterval(checkTimeout);
+  }, [currentUser, lastActivity]);
 
   // URL判定
   const urlParams = new URLSearchParams(window.location.search);
