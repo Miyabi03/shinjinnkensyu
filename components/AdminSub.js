@@ -1,5 +1,5 @@
 // 研修中タブ
-const AdminTrainingTab = ({ trainees, setTrainees, currentTime, setShowAddTraineeModal, setDeleteTarget, setShowDeleteModal }) => {
+const AdminTrainingTab = ({ trainees, setTrainees, currentTime, setShowAddTraineeModal, setDeleteTarget, setShowDeleteModal, onSelectMember }) => {
   const trainingList = trainees.filter(t => t.status === 'training');
   
   return (
@@ -21,8 +21,8 @@ const AdminTrainingTab = ({ trainees, setTrainees, currentTime, setShowAddTraine
             return (
               <div key={t.id} style={{ background: 'white', borderRadius: '12px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name}</div>
+                  <div onClick={() => onSelectMember && onSelectMember(t)} style={{ cursor: onSelectMember ? 'pointer' : 'default', flex: 1 }}>
+                    <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name} {onSelectMember && <span style={{ fontSize: '12px', color: '#7c3aed' }}>▶</span>}</div>
                     <div style={{ fontSize: '12px', color: '#64748b' }}>残り {time.days}日 {time.hours}時間</div>
                     <div style={{ fontSize: '11px', color: '#94a3b8' }}>開始: {new Date(t.firstLoginAt).toLocaleDateString('ja-JP')}</div>
                   </div>
@@ -41,7 +41,7 @@ const AdminTrainingTab = ({ trainees, setTrainees, currentTime, setShowAddTraine
 };
 
 // 期限切れタブ
-const AdminExpiredTab = ({ trainees, setTrainees, setDeleteTarget, setShowDeleteModal }) => {
+const AdminExpiredTab = ({ trainees, setTrainees, setDeleteTarget, setShowDeleteModal, onSelectMember }) => {
   const expiredList = trainees.filter(t => t.status === 'expired');
   
   return (
@@ -58,8 +58,8 @@ const AdminExpiredTab = ({ trainees, setTrainees, setDeleteTarget, setShowDelete
           {expiredList.map(t => (
             <div key={t.id} style={{ background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid #fecaca' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name}</div>
+                <div onClick={() => onSelectMember && onSelectMember(t)} style={{ cursor: onSelectMember ? 'pointer' : 'default', flex: 1 }}>
+                  <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name} {onSelectMember && <span style={{ fontSize: '12px', color: '#7c3aed' }}>▶</span>}</div>
                   <div style={{ fontSize: '12px', color: '#dc2626' }}>期限切れ</div>
                   <div style={{ fontSize: '11px', color: '#94a3b8' }}>開始: {new Date(t.firstLoginAt).toLocaleDateString('ja-JP')}</div>
                 </div>
@@ -77,7 +77,7 @@ const AdminExpiredTab = ({ trainees, setTrainees, setDeleteTarget, setShowDelete
 };
 
 // デビュータブ
-const AdminDebutTab = ({ trainees }) => {
+const AdminDebutTab = ({ trainees, onSelectMember }) => {
   const debutList = trainees.filter(t => t.status === 'debut');
   
   return (
@@ -92,12 +92,12 @@ const AdminDebutTab = ({ trainees }) => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {debutList.map(t => (
-            <div key={t.id} style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', borderRadius: '12px', padding: '16px', border: '1px solid #86efac' }}>
+            <div key={t.id} onClick={() => onSelectMember && onSelectMember(t)} style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', borderRadius: '12px', padding: '16px', border: '1px solid #86efac', cursor: onSelectMember ? 'pointer' : 'default' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '18px' }}>{t.name.charAt(0)}</div>
                   <div>
-                    <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name}</div>
+                    <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{t.name} {onSelectMember && <span style={{ fontSize: '12px', color: '#16a34a' }}>▶</span>}</div>
                     <div style={{ fontSize: '12px', color: '#16a34a' }}>⭐ デビュー: {t.debutAt ? new Date(t.debutAt).toLocaleDateString('ja-JP') : '不明'}</div>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ const AdminFadeOutTab = ({ fadeOutList }) => {
 };
 
 // 進捗一覧タブ
-const AdminProgressTab = ({ trainees, traineeProgress, currentTime }) => (
+const AdminProgressTab = ({ trainees, traineeProgress, currentTime, onSelectMember }) => (
   <>
     <div style={{ marginBottom: '20px' }}><h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>📊 研修進捗一覧</h2></div>
 
@@ -160,11 +160,11 @@ const AdminProgressTab = ({ trainees, traineeProgress, currentTime }) => (
         const percent = Math.round((completed / 13) * 100);
         const time = getTimeRemaining(trainee.firstLoginAt, currentTime);
         return (
-          <div key={trainee.id} style={{ background: 'white', borderRadius: '16px', padding: '16px', border: percent === 100 ? '2px solid #16a34a' : '1px solid #e2e8f0' }}>
+          <div key={trainee.id} onClick={() => onSelectMember && onSelectMember(trainee)} style={{ background: 'white', borderRadius: '16px', padding: '16px', border: percent === 100 ? '2px solid #16a34a' : '1px solid #e2e8f0', cursor: onSelectMember ? 'pointer' : 'default' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '44px', height: '44px', background: trainee.status === 'debut' ? 'linear-gradient(135deg, #7c3aed, #9333ea)' : 'linear-gradient(135deg, #f59e0b, #d97706)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>{trainee.name.charAt(0)}</div>
-                <div><div style={{ fontWeight: '600', color: '#1e293b' }}>{trainee.name}</div><div style={{ fontSize: '12px', color: '#64748b' }}>{trainee.status === 'debut' ? '⭐ デビュー済み' : `残り ${time.days}日`}</div></div>
+                <div><div style={{ fontWeight: '600', color: '#1e293b' }}>{trainee.name} {onSelectMember && <span style={{ fontSize: '12px', color: '#7c3aed' }}>▶</span>}</div><div style={{ fontSize: '12px', color: '#64748b' }}>{trainee.status === 'debut' ? '⭐ デビュー済み' : `残り ${time.days}日`}</div></div>
               </div>
               <div style={{ fontSize: '24px', fontWeight: '700', color: percent === 100 ? '#16a34a' : percent >= 50 ? '#2563eb' : '#f59e0b' }}>{percent}%</div>
             </div>
@@ -182,6 +182,84 @@ const AdminProgressTab = ({ trainees, traineeProgress, currentTime }) => (
     </div>
   </>
 );
+
+// メンバー一覧タブ（オーナーは全員、管理者は新人のみ）
+const AdminMembersTab = ({ trainees, admins, currentUser, traineeProgress, onSelectMember, isOwner }) => {
+  const getRoleLabel = (role) => {
+    if (role === 'owner') return '👑 オーナー';
+    if (role === 'admin') return '👤 管理者';
+    return '🎓 新人';
+  };
+
+  const getRoleColor = (role) => {
+    if (role === 'owner') return '#f59e0b';
+    if (role === 'admin') return '#7c3aed';
+    return '#2563eb';
+  };
+
+  return (
+    <>
+      <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>👥 メンバー一覧</h2>
+      
+      {/* オーナーのみ: 管理者一覧 */}
+      {isOwner && (
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '12px' }}>管理者・オーナー</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {admins.map(admin => (
+              <div key={admin.id} onClick={() => onSelectMember(admin)} style={{ background: admin.role === 'owner' ? 'linear-gradient(135deg, #fefce8, #fef9c3)' : 'white', borderRadius: '12px', padding: '16px', border: admin.role === 'owner' ? '1px solid #fde047' : '1px solid #e2e8f0', cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '44px', height: '44px', background: `linear-gradient(135deg, ${getRoleColor(admin.role)}, ${getRoleColor(admin.role)}cc)`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>{admin.name.charAt(0)}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '600', color: '#1e293b' }}>{admin.name} {admin.id === currentUser.id && <span style={{ fontSize: '11px', color: '#94a3b8' }}>(自分)</span>}</div>
+                    <div style={{ fontSize: '12px', color: getRoleColor(admin.role) }}>{getRoleLabel(admin.role)}</div>
+                  </div>
+                  <div style={{ color: '#94a3b8' }}>▶</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 新人一覧 */}
+      <div>
+        <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#64748b', marginBottom: '12px' }}>新人</h3>
+        {trainees.length === 0 ? (
+          <div style={{ background: 'white', borderRadius: '16px', padding: '40px', textAlign: 'center' }}>
+            <p style={{ color: '#94a3b8' }}>新人がいません</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {trainees.map(trainee => {
+              const progress = traineeProgress[trainee.id] || [];
+              const progressPercent = Math.round((progress.length / 13) * 100);
+              const statusLabel = trainee.status === 'debut' ? '⭐ デビュー' : trainee.status === 'expired' ? '🔒 期限切れ' : '🎓 研修中';
+              const statusColor = trainee.status === 'debut' ? '#16a34a' : trainee.status === 'expired' ? '#dc2626' : '#2563eb';
+              
+              return (
+                <div key={trainee.id} onClick={() => onSelectMember(trainee)} style={{ background: 'white', borderRadius: '12px', padding: '16px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '44px', height: '44px', background: `linear-gradient(135deg, ${statusColor}, ${statusColor}cc)`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>{trainee.name.charAt(0)}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: '#1e293b' }}>{trainee.name}</div>
+                      <div style={{ fontSize: '12px', color: statusColor }}>{statusLabel}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: progressPercent === 100 ? '#16a34a' : '#2563eb' }}>{progressPercent}%</div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8' }}>進捗</div>
+                    </div>
+                    <div style={{ color: '#94a3b8' }}>▶</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
 
 // シフト一覧（次回出勤予定付き）
 const AdminShiftList = ({ trainees, allShifts, setSelectedTraineeForShift }) => {
