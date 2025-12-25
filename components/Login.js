@@ -83,14 +83,20 @@ const LoginView = ({ trainees, admins, setCurrentUser, setView }) => {
   const [loginPassword, setLoginPassword] = React.useState('');
   const [loginError, setLoginError] = React.useState('');
   
-  // URLパラメータで管理者モードを判定（owner または admin）
+  // URLパラメータで管理者モードを判定
   const urlParams = new URLSearchParams(window.location.search);
-  const isAdminMode = urlParams.get('admin') === 'true' || urlParams.get('owner') === 'true';
+  const isOwnerMode = urlParams.get('owner') === 'true';
+  const isAdminMode = urlParams.get('admin') === 'true' || isOwnerMode;
 
   const handleLogin = () => {
     if (isAdminMode) {
       const admin = admins.find(a => a.email === loginEmail && a.name === loginName && a.password === loginPassword);
       if (admin) {
+        // オーナーモードの場合、オーナーのみログイン可能
+        if (isOwnerMode && admin.role !== 'owner') {
+          setLoginError('オーナー権限がありません');
+          return;
+        }
         setCurrentUser(admin);
         setView('admin');
         setLoginError('');
@@ -109,12 +115,22 @@ const LoginView = ({ trainees, admins, setCurrentUser, setView }) => {
     }
   };
 
+  // オーナーモードのヘッダー色
+  const headerBg = isOwnerMode 
+    ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
+    : isAdminMode 
+      ? 'linear-gradient(135deg, #7c3aed, #9333ea)' 
+      : 'linear-gradient(135deg, #1e40af, #2563eb)';
+
+  const headerIcon = isOwnerMode ? '👑' : isAdminMode ? '👤' : '🎓';
+  const headerTitle = isOwnerMode ? 'オーナーログイン' : isAdminMode ? '管理者ログイン' : '新人研修システム';
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f7ff 0%, #dbeafe 100%)', fontFamily: 'sans-serif' }}>
-      <div style={{ background: isAdminMode ? 'linear-gradient(135deg, #7c3aed, #9333ea)' : 'linear-gradient(135deg, #1e40af, #2563eb)', padding: '16px 20px', color: 'white' }}>
+      <div style={{ background: headerBg, padding: '16px 20px', color: 'white' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '36px', height: '36px', background: 'white', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{isAdminMode ? '👤' : '🎓'}</div>
-          <span style={{ fontSize: '18px', fontWeight: '700' }}>新人研修システム</span>
+          <div style={{ width: '36px', height: '36px', background: 'white', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>{headerIcon}</div>
+          <span style={{ fontSize: '18px', fontWeight: '700' }}>{headerTitle}</span>
         </div>
       </div>
       

@@ -262,8 +262,57 @@ const App = () => {
   }, [currentTime, trainees]);
 
   // ハンドラー
-  const handleReset = () => {
-    // リセットはFirebaseでは慎重に（今は何もしない）
+  const handleReset = async () => {
+    // オーナー専用：自分以外の全データを削除
+    if (currentUser?.role !== 'owner') {
+      alert('この操作はオーナーのみ実行できます');
+      setShowResetModal(false);
+      return;
+    }
+    
+    try {
+      // 自分以外の管理者を削除
+      for (const admin of admins) {
+        if (admin.id !== currentUser.id) {
+          await FirebaseDB.deleteAdmin(admin.id);
+        }
+      }
+      
+      // 全新人を削除
+      for (const trainee of trainees) {
+        await FirebaseDB.deleteTrainee(trainee.id);
+      }
+      
+      // 全シフトを削除
+      for (const traineeId of Object.keys(allShifts)) {
+        await db.collection('shifts').doc(traineeId).delete();
+      }
+      
+      // 全進捗を削除
+      const progressSnapshot = await db.collection('progress').get();
+      for (const doc of progressSnapshot.docs) {
+        await db.collection('progress').doc(doc.id).delete();
+      }
+      
+      // 全フェードアウトを削除
+      const fadeoutSnapshot = await db.collection('fadeout').get();
+      for (const doc of fadeoutSnapshot.docs) {
+        await db.collection('fadeout').doc(doc.id).delete();
+      }
+      
+      // ローカル状態を更新
+      setAdmins([currentUser]);
+      setTrainees([]);
+      setAllShifts({});
+      setTraineeProgress({});
+      setFadeOutList([]);
+      
+      alert('自分以外の全データを削除しました');
+    } catch (error) {
+      console.error('リセットエラー:', error);
+      alert('リセット中にエラーが発生しました');
+    }
+    
     setShowResetModal(false);
   };
 
@@ -437,7 +486,7 @@ const App = () => {
         />
         {showAddTraineeModal && <AddTraineeModal newTraineeName={newTraineeName} setNewTraineeName={setNewTraineeName} newTraineeEmail={newTraineeEmail} setNewTraineeEmail={setNewTraineeEmail} handleAddTrainee={handleAddTrainee} setShowAddTraineeModal={setShowAddTraineeModal} />}
         {showDeleteModal && deleteTarget && <DeleteModal deleteTarget={deleteTarget} setShowDeleteModal={setShowDeleteModal} setDeleteTarget={setDeleteTarget} handleDeleteTrainee={handleDeleteTrainee} />}
-        {showResetModal && <ResetModal setShowResetModal={setShowResetModal} handleReset={handleReset} />}
+        {showResetModal && <ResetModal setShowResetModal={setShowResetModal} handleReset={handleReset} currentUser={currentUser} />}
         {showAddAdminModal && <AddAdminModal newAdminName={newAdminName} setNewAdminName={setNewAdminName} newAdminEmail={newAdminEmail} setNewAdminEmail={setNewAdminEmail} newAdminPassword={newAdminPassword} setNewAdminPassword={setNewAdminPassword} handleAddAdmin={handleAddAdmin} setShowAddAdminModal={setShowAddAdminModal} />}
       </>
     );

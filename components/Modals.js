@@ -74,20 +74,51 @@ const DeleteModal = ({ deleteTarget, setShowDeleteModal, setDeleteTarget, handle
   </div>
 );
 
-// リセット確認モーダル
-const ResetModal = ({ setShowResetModal, handleReset }) => (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
-    <div style={{ background: 'white', borderRadius: '20px', padding: '24px', width: '90%', maxWidth: '400px', textAlign: 'center' }}>
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔄</div>
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px', color: '#1e293b' }}>データリセット</h3>
-      <p style={{ fontSize: '15px', color: '#64748b', marginBottom: '24px' }}>すべてのデータを初期状態に戻しますか？</p>
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <button onClick={() => setShowResetModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', color: '#64748b', fontWeight: '600', cursor: 'pointer' }}>キャンセル</button>
-        <button onClick={handleReset} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', background: '#f59e0b', color: 'white', fontWeight: '600', cursor: 'pointer' }}>リセット</button>
+// リセット確認モーダル（オーナー専用：自分以外全削除）
+const ResetModal = ({ setShowResetModal, handleReset, currentUser }) => {
+  const isOwner = currentUser?.role === 'owner';
+  
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+      <div style={{ background: 'white', borderRadius: '20px', padding: '24px', width: '90%', maxWidth: '400px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px', color: '#1e293b' }}>
+          {isOwner ? '全データリセット' : '権限がありません'}
+        </h3>
+        {isOwner ? (
+          <>
+            <p style={{ fontSize: '15px', color: '#dc2626', marginBottom: '16px', fontWeight: '600' }}>
+              自分以外の全てのデータを削除します
+            </p>
+            <div style={{ background: '#fef2f2', borderRadius: '10px', padding: '12px', marginBottom: '24px', textAlign: 'left', fontSize: '13px', color: '#64748b' }}>
+              <div>• 全ての管理者（自分以外）</div>
+              <div>• 全ての新人</div>
+              <div>• 全てのシフト・進捗データ</div>
+              <div>• フェードアウトリスト</div>
+            </div>
+            <p style={{ fontSize: '13px', color: '#dc2626', marginBottom: '16px' }}>
+              この操作は取り消せません！
+            </p>
+          </>
+        ) : (
+          <p style={{ fontSize: '15px', color: '#64748b', marginBottom: '24px' }}>
+            この操作はオーナーのみ実行できます
+          </p>
+        )}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={() => setShowResetModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', background: 'white', color: '#64748b', fontWeight: '600', cursor: 'pointer' }}>
+            {isOwner ? 'キャンセル' : '閉じる'}
+          </button>
+          {isOwner && (
+            <button onClick={handleReset} style={{ flex: 1, padding: '14px', borderRadius: '10px', border: 'none', background: '#dc2626', color: 'white', fontWeight: '600', cursor: 'pointer' }}>
+              全削除する
+            </button>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 管理者追加モーダル
 const AddAdminModal = ({ newAdminName, setNewAdminName, newAdminEmail, setNewAdminEmail, newAdminPassword, setNewAdminPassword, handleAddAdmin, setShowAddAdminModal }) => (
