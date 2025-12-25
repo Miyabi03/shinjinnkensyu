@@ -289,24 +289,86 @@ const AdminShiftCalendar = ({ selectedTraineeForShift, setSelectedTraineeForShif
   </>
 );
 
-// 設定タブ
-const AdminSettingsTab = ({ admins, setAdmins, currentUser, setShowAddAdminModal }) => (
-  <>
-    <div style={{ marginBottom: '20px' }}><h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>⚙️ 設定</h2></div>
-    <div style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>👤 管理者一覧</h3>
-        <button onClick={() => setShowAddAdminModal(true)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#7c3aed', color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}>➕ 追加</button>
-      </div>
-      {admins.map((admin) => (
-        <div key={admin.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#faf5ff', borderRadius: '10px', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #7c3aed, #9333ea)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>{admin.name.charAt(0)}</div>
-            <div><div style={{ fontWeight: '600', color: '#1e293b' }}>{admin.name}</div><div style={{ fontSize: '12px', color: '#64748b' }}>{admin.email}</div></div>
-          </div>
-          {admins.length > 1 && (<button onClick={() => { if (admin.id === currentUser?.id) { alert('自分自身は削除できません'); return; } setAdmins(admins.filter(a => a.id !== admin.id)); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #dc2626', background: 'white', color: '#dc2626', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}>🗑</button>)}
+// 設定タブ（権限対応）
+const AdminSettingsTab = ({ admins, currentUser, setShowAddAdminModal, isOwner, handlePromoteToOwner, handleDeleteAdmin }) => {
+  
+  // 役職のラベルを取得
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'owner': return '👑 オーナー';
+      case 'admin': return '👤 管理者';
+      default: return '👤 管理者';
+    }
+  };
+
+  // 役職のバッジカラー
+  const getRoleBadgeStyle = (role) => {
+    if (role === 'owner') {
+      return { background: '#fef3c7', color: '#b45309', padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' };
+    }
+    return { background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: '600' };
+  };
+
+  return (
+    <>
+      <div style={{ marginBottom: '20px' }}><h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>⚙️ 設定</h2></div>
+      
+      {/* 自分の権限表示 */}
+      <div style={{ background: 'linear-gradient(135deg, #7c3aed, #9333ea)', borderRadius: '16px', padding: '20px', marginBottom: '16px', color: 'white' }}>
+        <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '4px' }}>ログイン中</div>
+        <div style={{ fontSize: '20px', fontWeight: '700', marginBottom: '4px' }}>{currentUser?.name}</div>
+        <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '12px', fontSize: '12px' }}>
+          {getRoleLabel(currentUser?.role)}
         </div>
-      ))}
-    </div>
-  </>
-);
+      </div>
+
+      <div style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>👥 メンバー一覧</h3>
+          {isOwner && (
+            <button onClick={() => setShowAddAdminModal(true)} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#7c3aed', color: 'white', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}>➕ 管理者追加</button>
+          )}
+        </div>
+        
+        {admins.map((admin) => (
+          <div key={admin.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: admin.role === 'owner' ? '#fefce8' : '#faf5ff', borderRadius: '10px', marginBottom: '8px', border: admin.role === 'owner' ? '1px solid #fde047' : '1px solid #e9d5ff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', background: admin.role === 'owner' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #7c3aed, #9333ea)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>{admin.name.charAt(0)}</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: '600', color: '#1e293b' }}>{admin.name}</span>
+                  <span style={getRoleBadgeStyle(admin.role)}>{admin.role === 'owner' ? 'オーナー' : '管理者'}</span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>{admin.email}</div>
+              </div>
+            </div>
+            
+            {/* オーナーのみ操作可能 */}
+            {isOwner && admin.id !== currentUser?.id && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {admin.role !== 'owner' && (
+                  <button onClick={() => { if (confirm(`${admin.name}さんをオーナーに昇格しますか？`)) handlePromoteToOwner(admin.id); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #f59e0b', background: 'white', color: '#f59e0b', fontWeight: '600', cursor: 'pointer', fontSize: '12px' }}>👑 オーナーに</button>
+                )}
+                <button onClick={() => { if (confirm(`${admin.name}さんを削除しますか？`)) handleDeleteAdmin(admin.id); }} style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #dc2626', background: 'white', color: '#dc2626', fontWeight: '600', cursor: 'pointer', fontSize: '12px' }}>🗑</button>
+              </div>
+            )}
+            
+            {admin.id === currentUser?.id && (
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>自分</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* 権限の説明 */}
+      <div style={{ background: 'white', borderRadius: '16px', padding: '20px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>📋 権限について</h3>
+        <div style={{ fontSize: '13px', color: '#64748b', lineHeight: '1.8' }}>
+          <div style={{ marginBottom: '8px' }}><span style={{ fontWeight: '600', color: '#f59e0b' }}>👑 オーナー:</span> 全ての操作が可能（管理者の追加・削除、オーナー任命）</div>
+          <div style={{ marginBottom: '8px' }}><span style={{ fontWeight: '600', color: '#7c3aed' }}>👤 管理者:</span> 新人の追加・編集・削除が可能</div>
+          <div><span style={{ fontWeight: '600', color: '#2563eb' }}>🎓 新人:</span> 自分の研修進捗・シフトの管理のみ</div>
+        </div>
+      </div>
+    </>
+  );
+};

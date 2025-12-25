@@ -7,7 +7,8 @@ const AdminView = ({
   showAddTraineeModal, setShowAddTraineeModal,
   showDeleteModal, setShowDeleteModal, deleteTarget, setDeleteTarget,
   showResetModal, setShowResetModal, handleReset,
-  showAddAdminModal, setShowAddAdminModal
+  showAddAdminModal, setShowAddAdminModal,
+  handlePromoteToOwner, handleDeleteAdmin
 }) => {
   const [adminTab, setAdminTab] = React.useState('training');
   const [selectedTraineeForShift, setSelectedTraineeForShift] = React.useState(null);
@@ -17,6 +18,9 @@ const AdminView = ({
   const [adminShiftType, setAdminShiftType] = React.useState('work');
   const [adminShiftStart, setAdminShiftStart] = React.useState('09:00');
   const [adminShiftEnd, setAdminShiftEnd] = React.useState('18:00');
+
+  // 権限チェック
+  const isOwner = currentUser?.role === 'owner';
 
   const trainingCount = trainees.filter(t => t.status === 'training').length;
   const expiredCount = trainees.filter(t => t.status === 'expired').length;
@@ -152,9 +156,10 @@ const AdminView = ({
         {adminTab === 'settings' && (
           <AdminSettingsTab
             admins={admins}
-            setAdmins={setAdmins}
             currentUser={currentUser}
             setShowAddAdminModal={setShowAddAdminModal}
+            onDeleteAdmin={handleDeleteAdmin}
+            onPromoteToOwner={handlePromoteToOwner}
           />
         )}
       </div>

@@ -12,6 +12,16 @@ const FirebaseDB = {
     return { id: docRef.id, ...admin };
   },
   
+  // 管理者を更新
+  async updateAdmin(id, data) {
+    await db.collection('admins').doc(id).update(data);
+  },
+  
+  // 管理者を削除
+  async deleteAdmin(id) {
+    await db.collection('admins').doc(id).delete();
+  },
+  
   // 新人一覧を取得
   async getTrainees() {
     const snapshot = await db.collection('trainees').get();
@@ -194,16 +204,18 @@ const App = () => {
     loadData();
   }, []);
 
-  // 初回セットアップ完了
+  // 初回セットアップ完了（オーナーとして登録）
   const handleFirstSetupComplete = async (admin) => {
     try {
-      const newAdmin = await FirebaseDB.addAdmin(admin);
+      // role: 'owner' を追加してオーナーとして登録
+      const ownerAdmin = { ...admin, role: 'owner' };
+      const newAdmin = await FirebaseDB.addAdmin(ownerAdmin);
       setAdmins([newAdmin]);
       setCurrentUser(newAdmin);
       setIsFirstSetup(false);
       setView('admin');
     } catch (error) {
-      console.error('管理者登録エラー:', error);
+      console.error('オーナー登録エラー:', error);
     }
   };
 
@@ -296,7 +308,8 @@ const App = () => {
         name: newAdminName,
         email: newAdminEmail,
         password: newAdminPassword,
-        isAdmin: true
+        isAdmin: true,
+        role: 'admin' // 通常追加は管理者として
       };
       const added = await FirebaseDB.addAdmin(newAdmin);
       setAdmins([...admins, added]);
@@ -306,6 +319,26 @@ const App = () => {
       setShowAddAdminModal(false);
     } catch (error) {
       console.error('管理者追加エラー:', error);
+    }
+  };
+
+  // 管理者をオーナーに昇格
+  const handlePromoteToOwner = async (adminId) => {
+    try {
+      await FirebaseDB.updateAdmin(adminId, { role: 'owner' });
+      setAdmins(admins.map(a => a.id === adminId ? { ...a, role: 'owner' } : a));
+    } catch (error) {
+      console.error('オーナー昇格エラー:', error);
+    }
+  };
+
+  // 管理者を削除
+  const handleDeleteAdmin = async (adminId) => {
+    try {
+      await FirebaseDB.deleteAdmin(adminId);
+      setAdmins(admins.filter(a => a.id !== adminId));
+    } catch (error) {
+      console.error('管理者削除エラー:', error);
     }
   };
 
@@ -399,6 +432,8 @@ const App = () => {
           handleReset={handleReset}
           showAddAdminModal={showAddAdminModal}
           setShowAddAdminModal={setShowAddAdminModal}
+          handlePromoteToOwner={handlePromoteToOwner}
+          handleDeleteAdmin={handleDeleteAdmin}
         />
         {showAddTraineeModal && <AddTraineeModal newTraineeName={newTraineeName} setNewTraineeName={setNewTraineeName} newTraineeEmail={newTraineeEmail} setNewTraineeEmail={setNewTraineeEmail} handleAddTrainee={handleAddTrainee} setShowAddTraineeModal={setShowAddTraineeModal} />}
         {showDeleteModal && deleteTarget && <DeleteModal deleteTarget={deleteTarget} setShowDeleteModal={setShowDeleteModal} setDeleteTarget={setDeleteTarget} handleDeleteTrainee={handleDeleteTrainee} />}
