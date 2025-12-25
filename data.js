@@ -1,18 +1,109 @@
-// 研修カリキュラムデータ
+// スプレッドシートのURL（CSV公開）
+const SPREADSHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1gok6wo4eN2S5kcCsnJVvQznZlEmMk07m7mXlb6Wu0Pg/export?format=csv&gid=277387492';
+
+// CSVをパースする関数
+const parseCSV = (csvText) => {
+  const lines = [];
+  let currentLine = '';
+  let insideQuotes = false;
+  
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i];
+    
+    if (char === '"') {
+      insideQuotes = !insideQuotes;
+      currentLine += char;
+    } else if (char === '\n' && !insideQuotes) {
+      lines.push(currentLine);
+      currentLine = '';
+    } else if (char === '\r' && !insideQuotes) {
+      // skip carriage return
+    } else {
+      currentLine += char;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  
+  return lines.map(line => {
+    const cells = [];
+    let cell = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        cells.push(cell);
+        cell = '';
+      } else {
+        cell += char;
+      }
+    }
+    cells.push(cell);
+    return cells;
+  });
+};
+
+// スプレッドシートから研修データを取得
+const fetchCurriculumFromSheet = async () => {
+  try {
+    const response = await fetch(SPREADSHEET_CSV_URL);
+    const csvText = await response.text();
+    const rows = parseCSV(csvText);
+    
+    // ヘッダー行をスキップ（1行目）
+    const dataRows = rows.slice(1);
+    
+    const curriculum = [];
+    let idCounter = 1;
+    
+    for (const row of dataRows) {
+      const no = row[0]?.trim();
+      const title = row[1]?.trim();
+      const content = row[3]?.trim();
+      
+      // タイトルがある行のみ処理（空行やセクションヘッダーをスキップ）
+      if (title && title !== '') {
+        curriculum.push({
+          id: idCounter,
+          title: title,
+          description: content || '',
+          done: false
+        });
+        idCounter++;
+      }
+    }
+    
+    console.log('スプレッドシートから研修データを取得しました:', curriculum.length, '件');
+    return curriculum;
+  } catch (error) {
+    console.error('スプレッドシート取得エラー:', error);
+    return null;
+  }
+};
+
+// デフォルトの研修カリキュラム（フォールバック用）
 const trainingCurriculum = [
-  { id: 1, title: '営業研修', description: '営業の基本を学ぶ動画研修', type: 'video', link: 'https://youtu.be/nXT_ait2Omg?si=pCuuJq2walKGgDRP', done: false },
-  { id: 2, title: 'Google Chrome セットアップ', description: 'Chromeをダウンロードし、営業部アカウントでログイン', type: 'task', steps: ['Google Chromeをダウンロード', 'addness.sales@gmail.com でログイン', 'アカウント同期完了を待つ（最大1日）'], link: 'https://www.google.com/chrome/', done: false },
-  { id: 3, title: '営業部Googleアカウントログイン & ZOOM設定', description: 'ZOOMアカウント作成、背景設定、ヘッドセット設定', type: 'task', steps: ['ZOOMアカウント作成・課金', 'バーチャル背景を設定', 'ヘッドセットマイクの初期設定', '待機室を設定'], link: 'https://zoom.us/ja/signin#/login', done: false },
-  { id: 4, title: 'aileadを使えるようになろう', description: 'aileadにログインして使用できるようにする', type: 'task', steps: ['Chromeプロファイルを追加', '指定アカウントでログイン', 'aileadにアクセスしGoogleでログイン', 'アカウント名が「小松晃也」になっていればOK'], link: 'https://www.ailead.app/', done: false },
-  { id: 5, title: '実際の面談動画を視聴', description: '面談の流れをイメージできるようにする', type: 'video', note: '手元に紙を用意してアウトプットしながら視聴', links: [{ label: 'かんなさんの商談動画', url: 'https://dashboard.ailead.app/call/d2f88c6b-bab8-4c29-831b-784e55d209a4' }, { label: '奈良さんの商談動画', url: 'https://dashboard.ailead.app/call/f512adda-e755-45c9-9f97-1d933b88edae' }], done: false },
-  { id: 6, title: 'マインドマップ使用時の注意点', description: '必ずコピーして使用すること', type: 'resource', links: [{ label: '商談で使用するマップ', url: 'https://mm.tt/map/3898422535?t=pwEGi9tz0y' }, { label: '自己紹介マップテンプレ', url: 'https://mm.tt/map/3764530937?t=8xytTHijxC' }], done: false },
-  { id: 7, title: '商談で使用するマインドマップ', description: 'マインドマップの使い方を確認', type: 'task', done: false },
-  { id: 8, title: 'ヒアリングパート', description: 'コンサルティングセールスのフローを学ぶ', type: 'video', link: 'https://youtu.be/7OIRPx4uEFU', done: false },
-  { id: 9, title: 'コンサルティングセールスについて学ぶ', description: '見本動画のコンサルパートを完コピして自然に話せるようになる', type: 'video', link: 'https://youtu.be/UJ28owembUg', note: '約30分', done: false },
-  { id: 10, title: 'クロージングパート', description: '営業資料（AI訴求）を学ぶ', type: 'resource', link: 'https://www.notion.so/addness/wiki-72dbbe8bfe35490aaaf0b10d4a6103ce?p=de95e9eb2ea5484e9c5c2b24afc3e848&pm=s', done: false },
-  { id: 11, title: '商談前の準備〜契約までのto do', description: '面談関連業務フローマップに従って進める', type: 'resource', link: 'https://mm.tt/map/3898843902?t=zV5aJIl2RT', note: 'やるか？質問するか？を徹底', done: false },
-  { id: 12, title: 'コンプライアンス', description: 'コンプライアンス研修資料を確認', type: 'resource', link: 'https://app.irusiru.jp/slide/4473e18e-9028-4467-b274-42731f3fe9e2?share=true', done: false },
-  { id: 13, title: 'コンプライアンス同意書', description: '動画視聴後、同意書にサイン', type: 'task', steps: ['動画を視聴', '同意書にサイン'], links: [{ label: '動画を視聴', url: 'https://youtu.be/jPpL3_KJbwc' }, { label: '同意書にサイン', url: 'https://docs.google.com/forms/d/e/1FAIpQLSfEaGyED-hOWpxKuBCaTwfVFtqUBiK_u6bOXZoxjIAF20FAeg/viewform?usp=sharing' }], done: false }
+  { id: 1, title: '営業研修', description: '営業の基本を学ぶ動画研修', done: false },
+  { id: 2, title: 'Google Chrome セットアップ', description: 'Chromeをダウンロードし、営業部アカウントでログイン', done: false },
+  { id: 3, title: '営業部Googleアカウントログイン & ZOOM設定', description: 'ZOOMアカウント作成、背景設定、ヘッドセット設定', done: false },
+  { id: 4, title: 'aileadを使えるようになろう', description: 'aileadにログインして使用できるようにする', done: false },
+  { id: 5, title: '実際の面談動画を視聴', description: '面談の流れをイメージできるようにする', done: false },
+  { id: 6, title: 'マインドマップ使用時の注意点', description: '必ずコピーして使用すること', done: false },
+  { id: 7, title: '商談で使用するマインドマップ', description: 'マインドマップの使い方を確認', done: false },
+  { id: 8, title: 'ヒアリングパート', description: 'コンサルティングセールスのフローを学ぶ', done: false },
+  { id: 9, title: 'コンサルティングセールスについて学ぶ', description: '見本動画のコンサルパートを完コピして自然に話せるようになる', done: false },
+  { id: 10, title: 'クロージングパート', description: '営業資料（AI訴求）を学ぶ', done: false },
+  { id: 11, title: '商談前の準備〜契約までのto do', description: '面談関連業務フローマップに従って進める', done: false },
+  { id: 12, title: 'コンプライアンス', description: 'コンプライアンス研修資料を確認', done: false },
+  { id: 13, title: 'コンプライアンス同意書', description: '動画視聴後、同意書にサイン', done: false }
 ];
 
 // デフォルトデータ（空）

@@ -130,7 +130,8 @@ const App = () => {
   const [admins, setAdmins] = React.useState([]);
   const [shifts, setShifts] = React.useState({});
   const [allShifts, setAllShifts] = React.useState({});
-  const [curriculum, setCurriculum] = React.useState(trainingCurriculum);
+  const [curriculum, setCurriculum] = React.useState([]);
+  const [baseCurriculum, setBaseCurriculum] = React.useState([]); // スプレッドシートから取得したベースデータ
   const [traineeProgress, setTraineeProgress] = React.useState({});
   const [fadeOutList, setFadeOutList] = React.useState([]);
 
@@ -177,6 +178,12 @@ const App = () => {
   React.useEffect(() => {
     const loadData = async () => {
       try {
+        // スプレッドシートから研修データを取得
+        const sheetCurriculum = await fetchCurriculumFromSheet();
+        const curriculumData = sheetCurriculum || trainingCurriculum; // フォールバック
+        setBaseCurriculum(curriculumData);
+        setCurriculum(curriculumData);
+        
         const [adminsData, traineesData, fadeOutData, shiftsData, progressData] = await Promise.all([
           FirebaseDB.getAdmins(),
           FirebaseDB.getTrainees(),
@@ -239,9 +246,9 @@ const App = () => {
 
   // 新人ログイン時にその人の進捗データをcurriculumに反映
   React.useEffect(() => {
-    if (currentUser && !currentUser.isAdmin && view === 'trainee') {
+    if (currentUser && !currentUser.isAdmin && view === 'trainee' && baseCurriculum.length > 0) {
       const userProgress = traineeProgress[currentUser.id] || [];
-      setCurriculum(trainingCurriculum.map(item => ({
+      setCurriculum(baseCurriculum.map(item => ({
         ...item,
         done: userProgress.includes(item.id)
       })));
@@ -249,7 +256,7 @@ const App = () => {
       const userShifts = allShifts[currentUser.id] || {};
       setShifts(userShifts);
     }
-  }, [currentUser, view, traineeProgress, allShifts]);
+  }, [currentUser, view, traineeProgress, allShifts, baseCurriculum]);
 
   // ステータス自動更新（期限切れチェック）
   React.useEffect(() => {
