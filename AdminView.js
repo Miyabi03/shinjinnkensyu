@@ -107,6 +107,7 @@ const AdminView = ({
             { id: 'members', label: 'ðŸ‘¥ ãƒ¡ãƒ³ãƒãƒ¼' },
             { id: 'progress', label: 'ðŸ“Š é€²æ—' },
             { id: 'shifts', label: 'ðŸ“… ã‚·ãƒ•ãƒˆ' },
+            { id: 'curriculum', label: '📚 研修内容' },
             { id: 'settings', label: 'âš™ï¸ è¨­å®š' }
           ].map(tab => (
             <button key={tab.id} onClick={() => { setAdminTab(tab.id); setSelectedTraineeForShift(null); }} style={{ padding: '10px 14px', borderRadius: '10px', border: 'none', background: adminTab === tab.id ? '#7c3aed' : 'white', color: adminTab === tab.id ? 'white' : '#64748b', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '13px' }}>{tab.label}</button>
