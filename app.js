@@ -1,28 +1,28 @@
-// Firebaseヘルパー関数
+// Firebaseãƒ˜ãƒ«ãƒ‘ãƒ¼é–¢æ•°
 const FirebaseDB = {
-  // 管理者を取得
+  // ç®¡ç†è€…ã‚’å–å¾—
   async getAdmins() {
     const snapshot = await db.collection('admins').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
   
-  // 管理者を追加
+  // ç®¡ç†è€…ã‚’è¿½åŠ 
   async addAdmin(admin) {
     const docRef = await db.collection('admins').add(admin);
     return { id: docRef.id, ...admin };
   },
   
-  // 管理者を更新
+  // ç®¡ç†è€…ã‚’æ›´æ–°
   async updateAdmin(id, data) {
     await db.collection('admins').doc(id).update(data);
   },
   
-  // 管理者を削除
+  // ç®¡ç†è€…ã‚’å‰Šé™¤
   async deleteAdmin(id) {
     await db.collection('admins').doc(id).delete();
   },
   
-  // 新人一覧を取得
+  // æ–°äººä¸€è¦§ã‚’å–å¾—
   async getTrainees() {
     const snapshot = await db.collection('trainees').get();
     return snapshot.docs.map(doc => {
@@ -36,7 +36,7 @@ const FirebaseDB = {
     });
   },
   
-  // 新人を追加
+  // æ–°äººã‚’è¿½åŠ 
   async addTrainee(trainee) {
     const docRef = await db.collection('trainees').add({
       ...trainee,
@@ -45,7 +45,7 @@ const FirebaseDB = {
     return { id: docRef.id, ...trainee };
   },
   
-  // 新人を更新
+  // æ–°äººã‚’æ›´æ–°
   async updateTrainee(id, data) {
     const updateData = { ...data };
     if (data.firstLoginAt) {
@@ -57,12 +57,12 @@ const FirebaseDB = {
     await db.collection('trainees').doc(id).update(updateData);
   },
   
-  // 新人を削除
+  // æ–°äººã‚’å‰Šé™¤
   async deleteTrainee(id) {
     await db.collection('trainees').doc(id).delete();
   },
   
-  // フェードアウトリストを取得
+  // ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆãƒªã‚¹ãƒˆã‚’å–å¾—
   async getFadeOutList() {
     const snapshot = await db.collection('fadeout').get();
     return snapshot.docs.map(doc => {
@@ -76,7 +76,7 @@ const FirebaseDB = {
     });
   },
   
-  // フェードアウトに追加
+  // ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã«è¿½åŠ 
   async addToFadeOut(trainee) {
     await db.collection('fadeout').add({
       ...trainee,
@@ -85,7 +85,7 @@ const FirebaseDB = {
     });
   },
   
-  // シフトを取得
+  // ã‚·ãƒ•ãƒˆã‚’å–å¾—
   async getAllShifts() {
     const snapshot = await db.collection('shifts').get();
     const shifts = {};
@@ -95,12 +95,12 @@ const FirebaseDB = {
     return shifts;
   },
   
-  // シフトを保存
+  // ã‚·ãƒ•ãƒˆã‚’ä¿å­˜
   async saveShifts(traineeId, shiftsData) {
     await db.collection('shifts').doc(traineeId).set(shiftsData);
   },
   
-  // 進捗データを取得
+  // é€²æ—ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
   async getProgress() {
     const snapshot = await db.collection('progress').get();
     const progress = {};
@@ -110,13 +110,45 @@ const FirebaseDB = {
     return progress;
   },
   
-  // 進捗データを保存
+  // é€²æ—ãƒ‡ãƒ¼ã‚¿ã‚’ä¿å­˜
   async saveProgress(traineeId, completedItems) {
     await db.collection('progress').doc(traineeId).set({ completedItems });
+  },
+
+  // カリキュラムを取得
+  async getCurriculum() {
+    const snapshot = await db.collection('curriculum').orderBy('order').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  // カリキュラム項目を追加
+  async addCurriculumItem(item) {
+    const docRef = await db.collection('curriculum').add(item);
+    return { id: docRef.id, ...item };
+  },
+
+  // カリキュラム項目を更新
+  async updateCurriculumItem(id, data) {
+    await db.collection('curriculum').doc(id).update(data);
+  },
+
+  // カリキュラム項目を削除
+  async deleteCurriculumItem(id) {
+    await db.collection('curriculum').doc(id).delete();
+  },
+
+  // カリキュラム全体を保存（並び替え時）
+  async saveCurriculumOrder(items) {
+    const batch = db.batch();
+    items.forEach((item, index) => {
+      const ref = db.collection('curriculum').doc(item.id);
+      batch.update(ref, { order: index });
+    });
+    await batch.commit();
   }
 };
 
-// メインアプリケーション
+// ãƒ¡ã‚¤ãƒ³ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³
 const App = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [view, setView] = React.useState('login');
@@ -125,20 +157,20 @@ const App = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [lastActivity, setLastActivity] = React.useState(Date.now());
 
-  // データ
+  // ãƒ‡ãƒ¼ã‚¿
   const [trainees, setTrainees] = React.useState([]);
   const [admins, setAdmins] = React.useState([]);
   const [shifts, setShifts] = React.useState({});
   const [allShifts, setAllShifts] = React.useState({});
   const [curriculum, setCurriculum] = React.useState([]);
-  const [baseCurriculum, setBaseCurriculum] = React.useState([]); // スプレッドシートから取得したベースデータ
+  const [baseCurriculum, setBaseCurriculum] = React.useState([]); // ã‚¹ãƒ—ãƒ¬ãƒƒãƒ‰ã‚·ãƒ¼ãƒˆã‹ã‚‰å–å¾—ã—ãŸãƒ™ãƒ¼ã‚¹ãƒ‡ãƒ¼ã‚¿
   const [traineeProgress, setTraineeProgress] = React.useState({});
   const [fadeOutList, setFadeOutList] = React.useState([]);
 
-  // 5分間（300000ms）操作がなければ自動ログアウト
+  // 5åˆ†é–“ï¼ˆ300000msï¼‰æ“ä½œãŒãªã‘ã‚Œã°è‡ªå‹•ãƒ­ã‚°ã‚¢ã‚¦ãƒˆ
   const TIMEOUT_DURATION = 5 * 60 * 1000;
 
-  // ユーザー操作を検知してlastActivityを更新
+  // ãƒ¦ãƒ¼ã‚¶ãƒ¼æ“ä½œã‚’æ¤œçŸ¥ã—ã¦lastActivityã‚’æ›´æ–°
   React.useEffect(() => {
     const updateActivity = () => setLastActivity(Date.now());
     
@@ -155,32 +187,32 @@ const App = () => {
     };
   }, []);
 
-  // 定期的にタイムアウトをチェック
+  // å®šæœŸçš„ã«ã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã‚’ãƒã‚§ãƒƒã‚¯
   React.useEffect(() => {
     const checkTimeout = setInterval(() => {
       if (currentUser && Date.now() - lastActivity > TIMEOUT_DURATION) {
-        // 自動ログアウト
+        // è‡ªå‹•ãƒ­ã‚°ã‚¢ã‚¦ãƒˆ
         setCurrentUser(null);
         setView('login');
-        alert('5分間操作がなかったため、自動的にログアウトしました。');
+        alert('5åˆ†é–“æ“ä½œãŒãªã‹ã£ãŸãŸã‚ã€è‡ªå‹•çš„ã«ãƒ­ã‚°ã‚¢ã‚¦ãƒˆã—ã¾ã—ãŸã€‚');
       }
-    }, 10000); // 10秒ごとにチェック
+    }, 10000); // 10ç§’ã”ã¨ã«ãƒã‚§ãƒƒã‚¯
     
     return () => clearInterval(checkTimeout);
   }, [currentUser, lastActivity]);
 
-  // URL判定
+  // URLåˆ¤å®š
   const urlParams = new URLSearchParams(window.location.search);
   const isOwnerUrl = urlParams.get('owner') === 'true';
   const isAdminUrl = urlParams.get('admin') === 'true';
 
-  // 初回データ読み込み
+  // åˆå›žãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        // スプレッドシートから研修データを取得
+        // ã‚¹ãƒ—ãƒ¬ãƒƒãƒ‰ã‚·ãƒ¼ãƒˆã‹ã‚‰ç ”ä¿®ãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
         const sheetCurriculum = await fetchCurriculumFromSheet();
-        const curriculumData = sheetCurriculum || trainingCurriculum; // フォールバック
+        const curriculumData = sheetCurriculum || trainingCurriculum; // ãƒ•ã‚©ãƒ¼ãƒ«ãƒãƒƒã‚¯
         setBaseCurriculum(curriculumData);
         setCurriculum(curriculumData);
         
@@ -198,12 +230,12 @@ const App = () => {
         setAllShifts(shiftsData);
         setTraineeProgress(progressData);
         
-        // 初回セットアップ判定
+        // åˆå›žã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—åˆ¤å®š
         if (adminsData.length === 0 && isOwnerUrl) {
           setIsFirstSetup(true);
         }
       } catch (error) {
-        console.error('データ読み込みエラー:', error);
+        console.error('ãƒ‡ãƒ¼ã‚¿èª­ã¿è¾¼ã¿ã‚¨ãƒ©ãƒ¼:', error);
       } finally {
         setIsLoading(false);
       }
@@ -211,10 +243,10 @@ const App = () => {
     loadData();
   }, []);
 
-  // 初回セットアップ完了（オーナーとして登録）
+  // åˆå›žã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—å®Œäº†ï¼ˆã‚ªãƒ¼ãƒŠãƒ¼ã¨ã—ã¦ç™»éŒ²ï¼‰
   const handleFirstSetupComplete = async (admin) => {
     try {
-      // role: 'owner' を追加してオーナーとして登録
+      // role: 'owner' ã‚’è¿½åŠ ã—ã¦ã‚ªãƒ¼ãƒŠãƒ¼ã¨ã—ã¦ç™»éŒ²
       const ownerAdmin = { ...admin, role: 'owner' };
       const newAdmin = await FirebaseDB.addAdmin(ownerAdmin);
       setAdmins([newAdmin]);
@@ -222,11 +254,11 @@ const App = () => {
       setIsFirstSetup(false);
       setView('admin');
     } catch (error) {
-      console.error('オーナー登録エラー:', error);
+      console.error('ã‚ªãƒ¼ãƒŠãƒ¼ç™»éŒ²ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // モーダル用state
+  // ãƒ¢ãƒ¼ãƒ€ãƒ«ç”¨state
   const [showAddTraineeModal, setShowAddTraineeModal] = React.useState(false);
   const [newTraineeName, setNewTraineeName] = React.useState('');
   const [newTraineeEmail, setNewTraineeEmail] = React.useState('');
@@ -238,13 +270,13 @@ const App = () => {
   const [newAdminEmail, setNewAdminEmail] = React.useState('');
   const [newAdminPassword, setNewAdminPassword] = React.useState('');
 
-  // タイマー
+  // ã‚¿ã‚¤ãƒžãƒ¼
   React.useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // 新人ログイン時にその人の進捗データをcurriculumに反映
+  // æ–°äººãƒ­ã‚°ã‚¤ãƒ³æ™‚ã«ãã®äººã®é€²æ—ãƒ‡ãƒ¼ã‚¿ã‚’curriculumã«åæ˜ 
   React.useEffect(() => {
     if (currentUser && !currentUser.isAdmin && view === 'trainee' && baseCurriculum.length > 0) {
       const userProgress = traineeProgress[currentUser.id] || [];
@@ -252,13 +284,13 @@ const App = () => {
         ...item,
         done: userProgress.includes(item.id)
       })));
-      // シフトデータも読み込み
+      // ã‚·ãƒ•ãƒˆãƒ‡ãƒ¼ã‚¿ã‚‚èª­ã¿è¾¼ã¿
       const userShifts = allShifts[currentUser.id] || {};
       setShifts(userShifts);
     }
   }, [currentUser, view, traineeProgress, allShifts, baseCurriculum]);
 
-  // ステータス自動更新（期限切れチェック）
+  // ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹è‡ªå‹•æ›´æ–°ï¼ˆæœŸé™åˆ‡ã‚Œãƒã‚§ãƒƒã‚¯ï¼‰
   React.useEffect(() => {
     trainees.forEach(async (trainee) => {
       if (trainee.status === 'training') {
@@ -271,62 +303,62 @@ const App = () => {
     });
   }, [currentTime, trainees]);
 
-  // ハンドラー
+  // ãƒãƒ³ãƒ‰ãƒ©ãƒ¼
   const handleReset = async () => {
-    // オーナー専用：自分以外の全データを削除
+    // ã‚ªãƒ¼ãƒŠãƒ¼å°‚ç”¨ï¼šè‡ªåˆ†ä»¥å¤–ã®å…¨ãƒ‡ãƒ¼ã‚¿ã‚’å‰Šé™¤
     if (currentUser?.role !== 'owner') {
-      alert('この操作はオーナーのみ実行できます');
+      alert('ã“ã®æ“ä½œã¯ã‚ªãƒ¼ãƒŠãƒ¼ã®ã¿å®Ÿè¡Œã§ãã¾ã™');
       setShowResetModal(false);
       return;
     }
     
     try {
-      // 自分以外の管理者を削除
+      // è‡ªåˆ†ä»¥å¤–ã®ç®¡ç†è€…ã‚’å‰Šé™¤
       for (const admin of admins) {
         if (admin.id !== currentUser.id) {
           await FirebaseDB.deleteAdmin(admin.id);
         }
       }
       
-      // 全新人を削除
+      // å…¨æ–°äººã‚’å‰Šé™¤
       for (const trainee of trainees) {
         await FirebaseDB.deleteTrainee(trainee.id);
       }
       
-      // 全シフトを削除
+      // å…¨ã‚·ãƒ•ãƒˆã‚’å‰Šé™¤
       for (const traineeId of Object.keys(allShifts)) {
         await db.collection('shifts').doc(traineeId).delete();
       }
       
-      // 全進捗を削除
+      // å…¨é€²æ—ã‚’å‰Šé™¤
       const progressSnapshot = await db.collection('progress').get();
       for (const doc of progressSnapshot.docs) {
         await db.collection('progress').doc(doc.id).delete();
       }
       
-      // 全フェードアウトを削除
+      // å…¨ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã‚’å‰Šé™¤
       const fadeoutSnapshot = await db.collection('fadeout').get();
       for (const doc of fadeoutSnapshot.docs) {
         await db.collection('fadeout').doc(doc.id).delete();
       }
       
-      // ローカル状態を更新
+      // ãƒ­ãƒ¼ã‚«ãƒ«çŠ¶æ…‹ã‚’æ›´æ–°
       setAdmins([currentUser]);
       setTrainees([]);
       setAllShifts({});
       setTraineeProgress({});
       setFadeOutList([]);
       
-      alert('自分以外の全データを削除しました');
+      alert('è‡ªåˆ†ä»¥å¤–ã®å…¨ãƒ‡ãƒ¼ã‚¿ã‚’å‰Šé™¤ã—ã¾ã—ãŸ');
     } catch (error) {
-      console.error('リセットエラー:', error);
-      alert('リセット中にエラーが発生しました');
+      console.error('ãƒªã‚»ãƒƒãƒˆã‚¨ãƒ©ãƒ¼:', error);
+      alert('ãƒªã‚»ãƒƒãƒˆä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ');
     }
     
     setShowResetModal(false);
   };
 
-  // 削除処理（フェードアウトリストに移動）
+  // å‰Šé™¤å‡¦ç†ï¼ˆãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆãƒªã‚¹ãƒˆã«ç§»å‹•ï¼‰
   const handleDeleteTrainee = async (trainee) => {
     try {
       await FirebaseDB.addToFadeOut(trainee);
@@ -336,7 +368,7 @@ const App = () => {
       setShowDeleteModal(false);
       setDeleteTarget(null);
     } catch (error) {
-      console.error('削除エラー:', error);
+      console.error('å‰Šé™¤ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
@@ -356,7 +388,7 @@ const App = () => {
       setNewTraineeEmail('');
       setShowAddTraineeModal(false);
     } catch (error) {
-      console.error('新人追加エラー:', error);
+      console.error('æ–°äººè¿½åŠ ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
@@ -368,7 +400,7 @@ const App = () => {
         email: newAdminEmail,
         password: newAdminPassword,
         isAdmin: true,
-        role: 'admin' // 通常追加は管理者として
+        role: 'admin' // é€šå¸¸è¿½åŠ ã¯ç®¡ç†è€…ã¨ã—ã¦
       };
       const added = await FirebaseDB.addAdmin(newAdmin);
       setAdmins([...admins, added]);
@@ -377,11 +409,11 @@ const App = () => {
       setNewAdminPassword('');
       setShowAddAdminModal(false);
     } catch (error) {
-      console.error('管理者追加エラー:', error);
+      console.error('ç®¡ç†è€…è¿½åŠ ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // 統合モーダルからの新人追加
+  // çµ±åˆãƒ¢ãƒ¼ãƒ€ãƒ«ã‹ã‚‰ã®æ–°äººè¿½åŠ 
   const handleAddTraineeFromModal = async ({ name, email }) => {
     if (!name.trim() || !email.trim()) return;
     try {
@@ -395,11 +427,11 @@ const App = () => {
       const added = await FirebaseDB.addTrainee(newTrainee);
       setTrainees([...trainees, added]);
     } catch (error) {
-      console.error('新人追加エラー:', error);
+      console.error('æ–°äººè¿½åŠ ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // 統合モーダルからの管理者追加
+  // çµ±åˆãƒ¢ãƒ¼ãƒ€ãƒ«ã‹ã‚‰ã®ç®¡ç†è€…è¿½åŠ 
   const handleAddAdminFromModal = async ({ name, email, password }) => {
     if (!name.trim() || !email.trim() || !password.trim()) return;
     try {
@@ -413,39 +445,39 @@ const App = () => {
       const added = await FirebaseDB.addAdmin(newAdmin);
       setAdmins([...admins, added]);
     } catch (error) {
-      console.error('管理者追加エラー:', error);
+      console.error('ç®¡ç†è€…è¿½åŠ ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // 管理者をオーナーに昇格
+  // ç®¡ç†è€…ã‚’ã‚ªãƒ¼ãƒŠãƒ¼ã«æ˜‡æ ¼
   const handlePromoteToOwner = async (adminId) => {
     try {
       await FirebaseDB.updateAdmin(adminId, { role: 'owner' });
       setAdmins(admins.map(a => a.id === adminId ? { ...a, role: 'owner' } : a));
     } catch (error) {
-      console.error('オーナー昇格エラー:', error);
+      console.error('ã‚ªãƒ¼ãƒŠãƒ¼æ˜‡æ ¼ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // 管理者を削除
+  // ç®¡ç†è€…ã‚’å‰Šé™¤
   const handleDeleteAdmin = async (adminId) => {
     try {
       await FirebaseDB.deleteAdmin(adminId);
       setAdmins(admins.filter(a => a.id !== adminId));
     } catch (error) {
-      console.error('管理者削除エラー:', error);
+      console.error('ç®¡ç†è€…å‰Šé™¤ã‚¨ãƒ©ãƒ¼:', error);
     }
   };
 
-  // 完全削除（フェードアウトリストに残さない）
+  // å®Œå…¨å‰Šé™¤ï¼ˆãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆãƒªã‚¹ãƒˆã«æ®‹ã•ãªã„ï¼‰
   const handlePermanentDelete = async (member, memberType) => {
     try {
       if (memberType === 'trainee') {
-        // 新人を削除
+        // æ–°äººã‚’å‰Šé™¤
         await FirebaseDB.deleteTrainee(member.id);
         setTrainees(trainees.filter(t => t.id !== member.id));
         
-        // シフトデータも削除
+        // ã‚·ãƒ•ãƒˆãƒ‡ãƒ¼ã‚¿ã‚‚å‰Šé™¤
         if (allShifts[member.id]) {
           await db.collection('shifts').doc(member.id).delete();
           const newAllShifts = { ...allShifts };
@@ -453,7 +485,7 @@ const App = () => {
           setAllShifts(newAllShifts);
         }
         
-        // 進捗データも削除
+        // é€²æ—ãƒ‡ãƒ¼ã‚¿ã‚‚å‰Šé™¤
         if (traineeProgress[member.id]) {
           await db.collection('progress').doc(member.id).delete();
           const newProgress = { ...traineeProgress };
@@ -461,21 +493,80 @@ const App = () => {
           setTraineeProgress(newProgress);
         }
       } else {
-        // 管理者を削除
+        // ç®¡ç†è€…ã‚’å‰Šé™¤
         await FirebaseDB.deleteAdmin(member.id);
         setAdmins(admins.filter(a => a.id !== member.id));
       }
       
-      alert(`${member.name}さんを完全に削除しました`);
+      alert(`${member.name}ã•ã‚“ã‚’å®Œå…¨ã«å‰Šé™¤ã—ã¾ã—ãŸ`);
     } catch (error) {
-      console.error('完全削除エラー:', error);
+      console.error('å®Œå…¨å‰Šé™¤ã‚¨ãƒ©ãƒ¼:', error);
+      alert('å‰Šé™¤ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸ');
+    }
+  };
+
+  // カリキュラム項目を追加
+  const handleAddCurriculumItem = async (item) => {
+    try {
+      const newItem = await FirebaseDB.addCurriculumItem({
+        ...item,
+        order: baseCurriculum.length
+      });
+      const newCurriculum = [...baseCurriculum, newItem];
+      setBaseCurriculum(newCurriculum);
+      setCurriculum(newCurriculum);
+    } catch (error) {
+      console.error('カリキュラム追加エラー:', error);
+      alert('追加中にエラーが発生しました');
+    }
+  };
+
+  // カリキュラム項目を更新
+  const handleUpdateCurriculumItem = async (id, data) => {
+    try {
+      await FirebaseDB.updateCurriculumItem(id, data);
+      const newCurriculum = baseCurriculum.map(item => 
+        item.id === id ? { ...item, ...data } : item
+      );
+      setBaseCurriculum(newCurriculum);
+      setCurriculum(newCurriculum);
+    } catch (error) {
+      console.error('カリキュラム更新エラー:', error);
+      alert('更新中にエラーが発生しました');
+    }
+  };
+
+  // カリキュラム項目を削除
+  const handleDeleteCurriculumItem = async (id) => {
+    try {
+      await FirebaseDB.deleteCurriculumItem(id);
+      const newCurriculum = baseCurriculum.filter(item => item.id !== id);
+      if (newCurriculum.length > 0) {
+        await FirebaseDB.saveCurriculumOrder(newCurriculum);
+      }
+      setBaseCurriculum(newCurriculum);
+      setCurriculum(newCurriculum);
+    } catch (error) {
+      console.error('カリキュラム削除エラー:', error);
       alert('削除中にエラーが発生しました');
     }
   };
 
-  // 新人のステータス更新（デビューなど）
+  // カリキュラムの並び替え
+  const handleReorderCurriculum = async (newOrder) => {
+    try {
+      await FirebaseDB.saveCurriculumOrder(newOrder);
+      setBaseCurriculum(newOrder);
+      setCurriculum(newOrder);
+    } catch (error) {
+      console.error('カリキュラム並び替えエラー:', error);
+      alert('並び替え中にエラーが発生しました');
+    }
+  };
+
+  // æ–°äººã®ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹æ›´æ–°ï¼ˆãƒ‡ãƒ“ãƒ¥ãƒ¼ãªã©ï¼‰
   const handleUpdateTrainees = async (newTrainees) => {
-    // 変更があった新人を検出して更新
+    // å¤‰æ›´ãŒã‚ã£ãŸæ–°äººã‚’æ¤œå‡ºã—ã¦æ›´æ–°
     for (const newT of newTrainees) {
       const oldT = trainees.find(t => t.id === newT.id);
       if (oldT && (oldT.status !== newT.status || oldT.debutAt !== newT.debutAt)) {
@@ -488,9 +579,9 @@ const App = () => {
     setTrainees(newTrainees);
   };
 
-  // シフト更新
+  // ã‚·ãƒ•ãƒˆæ›´æ–°
   const handleUpdateAllShifts = async (newAllShifts) => {
-    // 変更があったシフトを保存
+    // å¤‰æ›´ãŒã‚ã£ãŸã‚·ãƒ•ãƒˆã‚’ä¿å­˜
     for (const traineeId of Object.keys(newAllShifts)) {
       if (JSON.stringify(allShifts[traineeId]) !== JSON.stringify(newAllShifts[traineeId])) {
         await FirebaseDB.saveShifts(traineeId, newAllShifts[traineeId]);
@@ -499,22 +590,22 @@ const App = () => {
     setAllShifts(newAllShifts);
   };
 
-  // 新人自身のシフト更新（Firebase保存付き）
+  // æ–°äººè‡ªèº«ã®ã‚·ãƒ•ãƒˆæ›´æ–°ï¼ˆFirebaseä¿å­˜ä»˜ãï¼‰
   const handleUpdateShifts = async (newShifts) => {
     setShifts(newShifts);
     
-    // currentUserがいる場合、Firebaseに保存してallShiftsも更新
+    // currentUserãŒã„ã‚‹å ´åˆã€Firebaseã«ä¿å­˜ã—ã¦allShiftsã‚‚æ›´æ–°
     if (currentUser && !currentUser.isAdmin) {
       await FirebaseDB.saveShifts(currentUser.id, newShifts);
       setAllShifts({ ...allShifts, [currentUser.id]: newShifts });
     }
   };
 
-  // カリキュラム進捗更新（Firebase保存付き）
+  // ã‚«ãƒªã‚­ãƒ¥ãƒ©ãƒ é€²æ—æ›´æ–°ï¼ˆFirebaseä¿å­˜ä»˜ãï¼‰
   const handleUpdateCurriculum = async (newCurriculum) => {
     setCurriculum(newCurriculum);
     
-    // currentUserがいる場合、完了したアイテムのIDを保存
+    // currentUserãŒã„ã‚‹å ´åˆã€å®Œäº†ã—ãŸã‚¢ã‚¤ãƒ†ãƒ ã®IDã‚’ä¿å­˜
     if (currentUser && !currentUser.isAdmin) {
       const completedItems = newCurriculum.filter(c => c.done).map(c => c.id);
       await FirebaseDB.saveProgress(currentUser.id, completedItems);
@@ -522,19 +613,19 @@ const App = () => {
     }
   };
 
-  // ローディング中
+  // ãƒ­ãƒ¼ãƒ‡ã‚£ãƒ³ã‚°ä¸­
   if (isLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(180deg, #f0f7ff 0%, #dbeafe 100%)' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎓</div>
-          <div style={{ color: '#64748b' }}>読み込み中...</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>ðŸŽ“</div>
+          <div style={{ color: '#64748b' }}>èª­ã¿è¾¼ã¿ä¸­...</div>
         </div>
       </div>
     );
   }
 
-  // ビュー切り替え
+  // ãƒ“ãƒ¥ãƒ¼åˆ‡ã‚Šæ›¿ãˆ
   if (isFirstSetup) {
     return <SetupView onComplete={handleFirstSetupComplete} />;
   }
@@ -579,6 +670,11 @@ const App = () => {
           handleAddTraineeFromModal={handleAddTraineeFromModal}
           handleAddAdminFromModal={handleAddAdminFromModal}
           handlePermanentDelete={handlePermanentDelete}
+          baseCurriculum={baseCurriculum}
+          onAddCurriculumItem={handleAddCurriculumItem}
+          onUpdateCurriculumItem={handleUpdateCurriculumItem}
+          onDeleteCurriculumItem={handleDeleteCurriculumItem}
+          onReorderCurriculum={handleReorderCurriculum}
         />
         {showAddTraineeModal && <AddTraineeModal newTraineeName={newTraineeName} setNewTraineeName={setNewTraineeName} newTraineeEmail={newTraineeEmail} setNewTraineeEmail={setNewTraineeEmail} handleAddTrainee={handleAddTrainee} setShowAddTraineeModal={setShowAddTraineeModal} />}
         {showDeleteModal && deleteTarget && <DeleteModal deleteTarget={deleteTarget} setShowDeleteModal={setShowDeleteModal} setDeleteTarget={setDeleteTarget} handleDeleteTrainee={handleDeleteTrainee} />}
@@ -595,5 +691,5 @@ const App = () => {
   return <div>Loading...</div>;
 };
 
-// レンダリング
+// ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
